@@ -1,49 +1,33 @@
-# AWS Lambda Empty Function Project
+# PokemonScheduler Lambda
 
-This starter project consists of:
-* Function.cs - class file containing a class with a single function handler method
-* aws-lambda-tools-defaults.json - default argument settings for use with Visual Studio and command line deployment tools for AWS
+This project contains a .NET 8 AWS Lambda function that is triggered on a daily schedule. Its purpose is to select a random Pokémon, fetch its data from the public [PokeAPI](https://pokeapi.co/), and save the resulting JSON data to an S3 bucket.
 
-You may also have a test project depending on the options selected.
+This serves as the "Pokémon of the Day" data source for the corresponding `PokemonApi` function.
 
-The generated function handler is a simple method accepting a string argument that returns the uppercase equivalent of the input string. Replace the body of this method, and parameters, to suit your needs. 
+## How it Works
 
-## Here are some steps to follow from Visual Studio:
+1.  **Trigger**: The function is designed to be triggered by an Amazon EventBridge (CloudWatch Events) schedule. A typical schedule would be a cron expression to run it once per day (e.g., `cron(0 10 * * ? *)` for 10:00 AM UTC daily).
+2.  **Execution**:
+    - A random Pokémon ID between 1 and 1025 is generated.
+    - A GET request is made to `https://pokeapi.co/api/v2/pokemon/{id}` to fetch the Pokémon's data.
+    - The JSON response is saved to an S3 bucket. The object key is formatted as `YYYY-MM-DD.json` (e.g., `2026-03-08.json`).
 
-To deploy your function to AWS Lambda, right click the project in Solution Explorer and select *Publish to AWS Lambda*.
+## Configuration
 
-To view your deployed function open its Function View window by double-clicking the function name shown beneath the AWS Lambda node in the AWS Explorer tree.
+The function requires a single environment variable to be configured:
 
-To perform testing against your deployed function use the Test Invoke tab in the opened Function View window.
+- `BUCKET_NAME`: The name of the S3 bucket where the daily Pokémon JSON file will be stored.
 
-To configure event sources for your deployed function, for example to have your function invoked when an object is created in an Amazon S3 bucket, use the Event Sources tab in the opened Function View window.
+This can be set for local development in the `aws-lambda-tools-defaults.json` file and must be configured in the Lambda function's environment settings when deployed to AWS.
 
-To update the runtime configuration of your deployed function use the Configuration tab in the opened Function View window.
+## Deployment
 
-To view execution logs of invocations of your function use the Logs tab in the opened Function View window.
+This project is set up for easy deployment using the AWS Toolkit for Visual Studio or the .NET Core CLI. The `aws-lambda-tools-defaults.json` file contains the default deployment settings.
 
-## Here are some steps to follow to get started from the command line:
+To deploy from the command line, navigate to the project directory and run:
 
-Once you have edited your template and code you can deploy your application using the [Amazon.Lambda.Tools Global Tool](https://github.com/aws/aws-extensions-for-dotnet-cli#aws-lambda-amazonlambdatools) from the command line.
-
-Install Amazon.Lambda.Tools Global Tools if not already installed.
-```
-    dotnet tool install -g Amazon.Lambda.Tools
-```
-
-If already installed check if new version is available.
-```
-    dotnet tool update -g Amazon.Lambda.Tools
+```bash
+dotnet lambda deploy-function
 ```
 
-Execute unit tests
-```
-    cd "PokemonScheduler/test/PokemonScheduler.Tests"
-    dotnet test
-```
-
-Deploy function to AWS Lambda
-```
-    cd "PokemonScheduler/src/PokemonScheduler"
-    dotnet lambda deploy-function
-```
+The tool will use the values in `aws-lambda-tools-defaults.json` to configure the function during deployment.
